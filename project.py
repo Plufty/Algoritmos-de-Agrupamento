@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from datetime import datetime
-from sklearn.cluster import AffinityPropagation, DBSCAN, KMeans
+from sklearn.cluster import AffinityPropagation, DBSCAN
 from sklearn import metrics
 from sklearn.decomposition import PCA
 from matplotlib.backends.backend_pdf import PdfPages
@@ -254,6 +254,35 @@ def gmm(data, n_components):
 #     labels = responsibilities.argmax(axis=1)
 #     return labels, weights, means, covariances
 
+def initialize_centroids(data, K):
+    centroids = data[np.random.choice(data.shape[0], K, replace=False)] #inicializando o centroide de forma aleatória
+    return centroids
+
+class KMeans:
+    def __init__(self, n_clusters, max_iter=100): #O laço de repetição executado até a convergência do algoritmo terá limite máximo de 100 iterações
+        self.n_clusters = n_clusters
+        self.max_iter = max_iter
+
+    def fit(self, X): #Execução do algoritmo
+        self.centroids = initialize_centroids(X, self.n_clusters)
+        
+        
+        for i in range(self.max_iter):
+            #Verificar distância e colocar no centróide mais próximo
+            distances = np.sqrt(((X - self.centroids[:, np.newaxis])**2).sum(axis=2)) #i.	Medida de proximidade: distância Euclidiana
+            labels = np.argmin(distances, axis=0) #Casos de empate na associação de um elemento ao centróide: escolher o primeiro.
+            
+            #Atualizar os Centroides
+            new_centroids = np.array([X[labels == k].mean(axis=0) for k in range(self.n_clusters)])
+            
+            #Verificar se alcançou a convergência
+            if np.allclose(self.centroids, new_centroids):
+                break
+                
+            self.centroids = new_centroids
+                
+        self.labels_ = labels
+        return self.labels_
 
 def fuzzy_c_means(data, n_clusters, m=2, max_iter=150, error=1e-5):
     n_samples = data.shape[0]
@@ -299,6 +328,8 @@ def fuzzy_c_means(data, n_clusters, m=2, max_iter=150, error=1e-5):
 
 
 def main():
+    np.random.seed(42) #Seed para que seja possível replicar os resultados (42 a resposta para qualquer pergunta no universo rs.)
+
     file_path, dataset = input_dataset()
     print(f"Você escolheu o dataset '{dataset}'.")
     data, labels = preprocess_data(file_path)
@@ -308,9 +339,8 @@ def main():
 
     # K-means
     kmeans = KMeans(n_clusters=k)
-    kmeans_labels = kmeans.fit_predict(data)
+    kmeans_labels = kmeans.fit(data)
     kmeans_silhouette = calculate_silhouette(data, kmeans_labels)
-    kmeans_inertia = kmeans.inertia_
 
     # Gaussian Mixture Model
     gmm_labels = gmm(data, k)    
