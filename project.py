@@ -400,6 +400,11 @@ def main():
         f.write(f'Fuzzy C-Means Adjusted Rand Index: {fcm_ari}\n')
         f.write(f"Melhor algoritmo de acordo com o Adjusted Rand Index: {best_ari}\n\n")
 
+        f.write("Original Clusters:\n")
+        original_clusters = {i: np.where(labels == i)[0].tolist() for i in np.unique(labels)}
+        for cluster in original_clusters.values():
+            f.write(f"{set(cluster)}\n")
+
         f.write("K-means Clusters:\n")
         kmeans_clusters = {i: np.where(kmeans_labels == i)[0].tolist() for i in np.unique(kmeans_labels)}
         for cluster in kmeans_clusters.values():
